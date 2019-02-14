@@ -32,6 +32,7 @@ import java.util.Locale;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -47,23 +48,16 @@ public class MainActivity extends AppCompatActivity {
     private static final String METRIC = "METRIC";
 
     private RecyclerView mForecastRecycler;
-    private TextView mCurrentTemp, mMinTemp, mCurrentMiniTemp, mMaxTemp;
+    private TextView mCurrentTemp, mMinTemp, mCurrentMiniTemp, mMaxTemp, mWeatherType;
     private ImageView mWeatherBackground;
     private FusedLocationProviderClient mFusedLocationClient;
+    private ConstraintLayout mWeatherContainer;
 
     private WeatherRecyclerViewAdapter mWeatherRecyclerViewAdapter;
 
-    //TODO: 2. Remove API KEY from code base before commiting!!!
-    //TODO: 3. elevation for controls
-    //TODO: 4. toolbar & actionbar
-    //TODO: 5. unit(METRIC VS imperial)
-    //TODO: 6. Onsave instance and restore
-    //TODO: 7. Handle for tablet Mode
-    //TODO: 8. if time:choose sea or forest theme/firebase login/unit test/control animations
+    //TODO: Add API KEY!!!
     private static final String API_KEY = "";
 
-    //Default to Rosebank if no location is found
-    //TODO 1. set the lats and longs
     private double mLatitude = -26.147133;
     private double mLongitude = 28.052434;
 
@@ -83,8 +77,10 @@ public class MainActivity extends AppCompatActivity {
         mMaxTemp = findViewById(R.id.max_temp);
         mCurrentMiniTemp = findViewById(R.id.current_mini_temp);
         mCurrentTemp = findViewById(R.id.current_temp);
+        mWeatherType = findViewById(R.id.weather_type_text);
         mWeatherBackground = findViewById(R.id.weather_background);
         mForecastRecycler = findViewById(R.id.forecast_recycler);
+        mWeatherContainer = findViewById(R.id.container);
 
         mWeatherRecyclerViewAdapter = new WeatherRecyclerViewAdapter(getApplicationContext());
         mForecastRecycler.setAdapter(mWeatherRecyclerViewAdapter);
@@ -184,7 +180,7 @@ public class MainActivity extends AppCompatActivity {
             for (List weather : totalForecastList) {
                 try {
                     Date date = format.parse(weather.getDtTxt());
-                    String nextDay= (String) DateFormat.format("EEEE", date);
+                    String nextDay = (String) DateFormat.format("EEEE", date);
                     if (!currentDay.equalsIgnoreCase(nextDay)) {
                         recyclerListData.add(weather);
                         days.add(nextDay);
@@ -195,6 +191,8 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
 
+            recyclerListData.remove(0);
+            days.remove(0);
             mWeatherRecyclerViewAdapter.setData(recyclerListData, days);
             mForecastRecycler.setAdapter(mWeatherRecyclerViewAdapter);
         }
@@ -208,6 +206,7 @@ public class MainActivity extends AppCompatActivity {
             if (mCurrentTemp != null) {
                 mCurrentTemp.setText(String.format(Locale.getDefault(), "%.0f", main.getTemp()));
                 mCurrentMiniTemp.setText(String.format(Locale.getDefault(), "%.0f", main.getTemp()));
+                mWeatherType.setText(currentWeather.getWeather().get(0).getMain().toUpperCase());
             }
 
             if (mMinTemp != null) {
@@ -219,12 +218,12 @@ public class MainActivity extends AppCompatActivity {
             }
 
             if (mWeatherBackground != null) {
+
                 switch ((currentWeather.getWeather().get(0).getMain()).toLowerCase()) {
+
                     case "rain":
                         mWeatherBackground.setImageResource(R.drawable.forest_rainy);
-                        if (mForecastRecycler != null) {
-                            mForecastRecycler.setBackgroundColor(getResources().getColor(R.color.rainy));
-                        }
+                        mWeatherContainer.setBackgroundColor(getResources().getColor(R.color.rainy));
 
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                             Window window = getWindow();
@@ -235,9 +234,7 @@ public class MainActivity extends AppCompatActivity {
 
                     case "clear sky":
                         mWeatherBackground.setImageResource(R.drawable.forest_sunny);
-                        if (mForecastRecycler != null) {
-                            mForecastRecycler.setBackgroundColor(getResources().getColor(R.color.sunny));
-                        }
+                        mWeatherContainer.setBackgroundColor(getResources().getColor(R.color.sunny));
 
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                             Window window = getWindow();
@@ -248,9 +245,7 @@ public class MainActivity extends AppCompatActivity {
 
                     case "few clouds":
                         mWeatherBackground.setImageResource(R.drawable.forest_cloudy);
-                        if (mForecastRecycler != null) {
-                            mForecastRecycler.setBackgroundColor(getResources().getColor(R.color.cloudy));
-                        }
+                        mWeatherContainer.setBackgroundColor(getResources().getColor(R.color.cloudy));
 
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                             Window window = getWindow();
@@ -261,6 +256,7 @@ public class MainActivity extends AppCompatActivity {
 
                     default:
                         mWeatherBackground.setImageResource(R.drawable.forest_sunny);
+                        mWeatherContainer.setBackgroundColor(getResources().getColor(R.color.sunny));
                 }
             }
         }

@@ -11,33 +11,48 @@
         android:id="@+id/weather_background"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:scaleType="fitXY"
         android:fitsSystemWindows="true"
+        android:scaleType="fitXY"
         android:src="@color/sunny"
-        app:layout_constraintBottom_toTopOf="@+id/forecast_recycler"
+        app:layout_constraintBottom_toTopOf="@+id/min_mini_container"
         app:layout_constraintTop_toTopOf="parent" />
 
     <LinearLayout
         android:id="@+id/current_temp_container"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        app:layout_constraintBottom_toBottomOf="@+id/current_mini_container"
+        android:orientation="vertical"
+        android:gravity="center"
+        app:layout_constraintBottom_toTopOf="@id/current_mini_container"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
-        <TextView
-            android:id="@+id/current_temp"
+        <LinearLayout
+            android:id="@+id/inner_current_temp_container"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textSize="60sp" />
+            android:elevation="@dimen/temp_elevation"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/current_temp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="60sp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:text="@string/degree_notation"
+                android:textSize="35sp" />
+        </LinearLayout>
 
         <TextView
             android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:text="@string/degree_notation"
-            android:textSize="35sp" />
+            android:layout_height="wrap_content"
+            android:id="@+id/weather_type_text"
+            android:textSize="30sp"/>
     </LinearLayout>
 
     <LinearLayout
@@ -45,6 +60,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginBottom="8dp"
+        android:elevation="@dimen/temp_elevation"
         android:gravity="center"
         android:orientation="vertical"
         app:layout_constraintBottom_toTopOf="@+id/forecast_recycler"
@@ -83,6 +99,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginBottom="8dp"
+        android:elevation="@dimen/temp_elevation"
         android:gravity="center"
         android:orientation="vertical"
         app:layout_constraintBottom_toTopOf="@+id/forecast_recycler"
@@ -120,6 +137,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginBottom="8dp"
+        android:elevation="@dimen/temp_elevation"
         android:gravity="center"
         android:orientation="vertical"
         android:visibility="visible"
@@ -157,12 +175,12 @@
         android:layout_width="match_parent"
         android:layout_height="2dp"
         android:background="@android:color/white"
-        app:layout_constraintBottom_toTopOf="@id/forecast_recycler"/>
+        app:layout_constraintBottom_toTopOf="@id/forecast_recycler" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/forecast_recycler"
         android:layout_width="match_parent"
-        android:layout_height="250dp"
-        android:background="@color/sunny"
+        android:layout_height="240dp"
+        android:elevation="@dimen/temp_elevation"
         app:layout_constraintBottom_toBottomOf="parent" />
 </androidx.constraintlayout.widget.ConstraintLayout>
