@@ -5,4 +5,5 @@
     <string name="min_mini">min</string>
     <string name="current_mini">current</string>
     <string name="max_mini">max</string>
+    <string name="weather_type_icon">Weather type icon</string>
 </resources>

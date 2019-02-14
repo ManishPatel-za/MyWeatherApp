@@ -3,8 +3,12 @@ package com.pletely.insane.myweatherapp;
 import android.Manifest;
 import android.content.pm.PackageManager;
 import android.location.Location;
+import android.os.Build;
 import android.os.Bundle;
+import android.text.format.DateFormat;
 import android.util.Log;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -16,15 +20,21 @@ import com.google.android.gms.tasks.OnSuccessListener;
 import com.pletely.insane.myweatherapp.pojos.current.CurrentWeather;
 import com.pletely.insane.myweatherapp.pojos.current.Main;
 import com.pletely.insane.myweatherapp.pojos.fiveday.FiveDayWeather;
+import com.pletely.insane.myweatherapp.pojos.fiveday.List;
 import com.pletely.insane.myweatherapp.retrofit.RetrofitClientInstance;
 import com.pletely.insane.myweatherapp.retrofit.WeatherService;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.Locale;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -34,17 +44,19 @@ public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = MainActivity.class.getSimpleName();
     private static final int MY_PERMISSIONS_REQUEST_LOCATION = 1;
-    private static final String metric = "metric";
+    private static final String METRIC = "METRIC";
 
     private RecyclerView mForecastRecycler;
     private TextView mCurrentTemp, mMinTemp, mCurrentMiniTemp, mMaxTemp;
     private ImageView mWeatherBackground;
     private FusedLocationProviderClient mFusedLocationClient;
 
+    private WeatherRecyclerViewAdapter mWeatherRecyclerViewAdapter;
+
     //TODO: 2. Remove API KEY from code base before commiting!!!
     //TODO: 3. elevation for controls
     //TODO: 4. toolbar & actionbar
-    //TODO: 5. unit(metric VS imperial)
+    //TODO: 5. unit(METRIC VS imperial)
     //TODO: 6. Onsave instance and restore
     //TODO: 7. Handle for tablet Mode
     //TODO: 8. if time:choose sea or forest theme/firebase login/unit test/control animations
@@ -73,6 +85,11 @@ public class MainActivity extends AppCompatActivity {
         mCurrentTemp = findViewById(R.id.current_temp);
         mWeatherBackground = findViewById(R.id.weather_background);
         mForecastRecycler = findViewById(R.id.forecast_recycler);
+
+        mWeatherRecyclerViewAdapter = new WeatherRecyclerViewAdapter(getApplicationContext());
+        mForecastRecycler.setAdapter(mWeatherRecyclerViewAdapter);
+        LinearLayoutManager linearLayoutManager = new LinearLayoutManager(getApplicationContext(), RecyclerView.VERTICAL, false);
+        mForecastRecycler.setLayoutManager(linearLayoutManager);
     }
 
     private void checkLocationPermissionAndStart() {
@@ -106,17 +123,17 @@ public class MainActivity extends AppCompatActivity {
                     });
 
 
-            fetchWeatherData(String.valueOf(mLatitude), String.valueOf(mLongitude), metric);
+            fetchWeatherData(String.valueOf(mLatitude), String.valueOf(mLongitude));
         }
     }
 
     //Fetch weather data from API using retrofit
-    private void fetchWeatherData(String latitude, String longitude, String metric) {
+    private void fetchWeatherData(String latitude, String longitude) {
 
         WeatherService weatherService = RetrofitClientInstance.getRetrofitInstance().create(WeatherService.class);
 
         //Get current weather for the specified location
-        Call<CurrentWeather> currentCall = weatherService.getCurrentWeather(latitude, longitude, metric, API_KEY);
+        Call<CurrentWeather> currentCall = weatherService.getCurrentWeather(latitude, longitude, METRIC, API_KEY);
         currentCall.enqueue(new Callback<CurrentWeather>() {
             @Override
             public void onResponse(Call<CurrentWeather> call, Response<CurrentWeather> response) {
@@ -135,7 +152,7 @@ public class MainActivity extends AppCompatActivity {
         });
 
         //Get 5 Day forecast for the specified location
-        Call<FiveDayWeather> forecastCall = weatherService.get5DayForecast(latitude, longitude, metric, API_KEY);
+        Call<FiveDayWeather> forecastCall = weatherService.get5DayForecast(latitude, longitude, METRIC, API_KEY);
         forecastCall.enqueue(new Callback<FiveDayWeather>() {
             @Override
             public void onResponse(Call<FiveDayWeather> call, Response<FiveDayWeather> response) {
@@ -144,6 +161,7 @@ public class MainActivity extends AppCompatActivity {
                 Log.v("status code: ", statusCode.toString());
 
                 FiveDayWeather forecastWeatherList = response.body();
+                setForecastWeather(forecastWeatherList);
             }
 
             @Override
@@ -151,6 +169,35 @@ public class MainActivity extends AppCompatActivity {
                 Log.v("http fail: ", t.getMessage());
             }
         });
+    }
+
+    private void setForecastWeather(FiveDayWeather forecastWeatherList) {
+
+        ArrayList<List> recyclerListData = new ArrayList<>();
+        ArrayList<String> days = new ArrayList();
+        String currentDay = "";
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+
+        if (forecastWeatherList != null) {
+            ArrayList<List> totalForecastList = (ArrayList<List>) forecastWeatherList.getList();
+
+            for (List weather : totalForecastList) {
+                try {
+                    Date date = format.parse(weather.getDtTxt());
+                    String nextDay= (String) DateFormat.format("EEEE", date);
+                    if (!currentDay.equalsIgnoreCase(nextDay)) {
+                        recyclerListData.add(weather);
+                        days.add(nextDay);
+                        currentDay = nextDay;
+                    }
+                } catch (ParseException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            mWeatherRecyclerViewAdapter.setData(recyclerListData, days);
+            mForecastRecycler.setAdapter(mWeatherRecyclerViewAdapter);
+        }
     }
 
     private void setCurrentWeather(CurrentWeather currentWeather) {
@@ -175,14 +222,41 @@ public class MainActivity extends AppCompatActivity {
                 switch ((currentWeather.getWeather().get(0).getMain()).toLowerCase()) {
                     case "rain":
                         mWeatherBackground.setImageResource(R.drawable.forest_rainy);
+                        if (mForecastRecycler != null) {
+                            mForecastRecycler.setBackgroundColor(getResources().getColor(R.color.rainy));
+                        }
+
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                            Window window = getWindow();
+                            window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+                            window.setStatusBarColor(getResources().getColor(R.color.rainy));
+                        }
                         break;
 
                     case "clear sky":
                         mWeatherBackground.setImageResource(R.drawable.forest_sunny);
+                        if (mForecastRecycler != null) {
+                            mForecastRecycler.setBackgroundColor(getResources().getColor(R.color.sunny));
+                        }
+
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                            Window window = getWindow();
+                            window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+                            window.setStatusBarColor(getResources().getColor(R.color.sunny));
+                        }
                         break;
 
                     case "few clouds":
                         mWeatherBackground.setImageResource(R.drawable.forest_cloudy);
+                        if (mForecastRecycler != null) {
+                            mForecastRecycler.setBackgroundColor(getResources().getColor(R.color.cloudy));
+                        }
+
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                            Window window = getWindow();
+                            window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+                            window.setStatusBarColor(getResources().getColor(R.color.cloudy));
+                        }
                         break;
 
                     default:
