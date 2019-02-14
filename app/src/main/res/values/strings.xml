@@ -1,4 +1,8 @@
 <resources>
     <string name="app_name">MyWeatherApp</string>
     <string name="permissiondenied">Permission denied for your current location</string>
+    <string name="degree_notation">o</string>
+    <string name="min_mini">min</string>
+    <string name="current_mini">current</string>
+    <string name="max_mini">max</string>
 </resources>
