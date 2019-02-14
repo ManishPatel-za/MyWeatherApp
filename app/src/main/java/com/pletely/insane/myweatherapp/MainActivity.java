@@ -10,15 +10,16 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.RecyclerView;
 import android.util.Log;
+import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.pletely.insane.myweatherapp.pojos.current.CurrentWeather;
 import com.pletely.insane.myweatherapp.pojos.fiveday.FiveDayWeather;
 import com.pletely.insane.myweatherapp.retrofit.RetrofitClientInstance;
 import com.pletely.insane.myweatherapp.retrofit.WeatherService;
-
-import java.util.ArrayList;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -27,10 +28,20 @@ import retrofit2.Response;
 public class MainActivity extends AppCompatActivity {
 
     private static final int MY_PERMISSIONS_REQUEST_LOCATION = 1;
-    private static final String API_ID = "";
+
+    private RecyclerView forecastRecycler;
+    private TextView currentTemp, minTemp, currentMiniTemp, maxTemp;
+    private ImageView weatherBackground;
+
+    //TODO: 2. Remove API KEY from code base before commiting!!!
+    //TODO: 3. elevation for controls
+    //TODO: 4. toolbar & actionbar
+    //TODO: 5. unit(metric VS imperial)
+    //TODO: 6. if time:choose sea or forest theme/firebase login/unit test/control animations
+    private static final String API_KEY = "";
 
     //Default to Rosebank if no location is found
-    //TODO 1. set th lats and longs
+    //TODO 1. set the lats and longs
     private double latitude = -26.147133;
     private double longitude = 28.052434;
 
@@ -39,7 +50,19 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        initialiseViews();
+
         checkLocationPermission();
+    }
+
+    private void initialiseViews() {
+
+        minTemp = (TextView) findViewById(R.id.min_temp);
+        maxTemp = (TextView) findViewById(R.id.max_temp);
+        currentMiniTemp = (TextView) findViewById(R.id.current_mini_temp);
+        currentTemp = (TextView) findViewById(R.id.current_temp);
+        weatherBackground = (ImageView) findViewById(R.id.weather_background);
+        forecastRecycler = (RecyclerView) findViewById(R.id.forecast_recycler);
     }
 
     private void checkLocationPermission() {
@@ -70,7 +93,7 @@ public class MainActivity extends AppCompatActivity {
         WeatherService weatherService = RetrofitClientInstance.getRetrofitInstance().create(WeatherService.class);
 
         //Get current weather for the specified location
-        Call<CurrentWeather> currentCall = weatherService.getCurrentWeather(latitude, longitude, metric, API_ID);
+        Call<CurrentWeather> currentCall = weatherService.getCurrentWeather(latitude, longitude, metric, API_KEY);
         currentCall.enqueue(new Callback<CurrentWeather>() {
             @Override
             public void onResponse(Call<CurrentWeather> call, Response<CurrentWeather> response) {
@@ -88,7 +111,7 @@ public class MainActivity extends AppCompatActivity {
         });
 
         //Get 5 Day forecast for the specified location
-        Call<FiveDayWeather> forecastCall = weatherService.get5DayForecast(latitude, longitude, metric, API_ID);
+        Call<FiveDayWeather> forecastCall = weatherService.get5DayForecast(latitude, longitude, metric, API_KEY);
         forecastCall.enqueue(new Callback<FiveDayWeather>() {
             @Override
             public void onResponse(Call<FiveDayWeather> call, Response<FiveDayWeather> response) {
