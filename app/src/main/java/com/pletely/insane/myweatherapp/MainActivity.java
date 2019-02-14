@@ -14,9 +14,12 @@ import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.pletely.insane.myweatherapp.pojos.current.CurrentWeather;
+import com.pletely.insane.myweatherapp.pojos.current.Main;
 import com.pletely.insane.myweatherapp.pojos.fiveday.FiveDayWeather;
 import com.pletely.insane.myweatherapp.retrofit.RetrofitClientInstance;
 import com.pletely.insane.myweatherapp.retrofit.WeatherService;
+
+import java.util.Locale;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -59,20 +62,20 @@ public class MainActivity extends AppCompatActivity {
 
         initialiseViews();
 
-        checkLocationPermission();
+        checkLocationPermissionAndStart();
     }
 
     private void initialiseViews() {
 
-        mMinTemp = (TextView) findViewById(R.id.min_temp);
-        mMaxTemp = (TextView) findViewById(R.id.max_temp);
-        mCurrentMiniTemp = (TextView) findViewById(R.id.current_mini_temp);
-        mCurrentTemp = (TextView) findViewById(R.id.current_temp);
-        mWeatherBackground = (ImageView) findViewById(R.id.weather_background);
-        mForecastRecycler = (RecyclerView) findViewById(R.id.forecast_recycler);
+        mMinTemp = findViewById(R.id.min_temp);
+        mMaxTemp = findViewById(R.id.max_temp);
+        mCurrentMiniTemp = findViewById(R.id.current_mini_temp);
+        mCurrentTemp = findViewById(R.id.current_temp);
+        mWeatherBackground = findViewById(R.id.weather_background);
+        mForecastRecycler = findViewById(R.id.forecast_recycler);
     }
 
-    private void checkLocationPermission() {
+    private void checkLocationPermissionAndStart() {
         if (ContextCompat.checkSelfPermission(this,
                 Manifest.permission.ACCESS_FINE_LOCATION)
                 != PackageManager.PERMISSION_GRANTED) {
@@ -107,6 +110,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    //Fetch weather data from API using retrofit
     private void fetchWeatherData(String latitude, String longitude, String metric) {
 
         WeatherService weatherService = RetrofitClientInstance.getRetrofitInstance().create(WeatherService.class);
@@ -121,6 +125,7 @@ public class MainActivity extends AppCompatActivity {
                 Log.v("status code: ", statusCode.toString());
 
                 CurrentWeather currentWeather = response.body();
+                setCurrentWeather(currentWeather);
             }
 
             @Override
@@ -148,25 +153,60 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    private void setCurrentWeather(CurrentWeather currentWeather) {
+
+        if (currentWeather != null) {
+            Main main = currentWeather.getMain();
+
+            if (mCurrentTemp != null) {
+                mCurrentTemp.setText(String.format(Locale.getDefault(), "%.0f", main.getTemp()));
+                mCurrentMiniTemp.setText(String.format(Locale.getDefault(), "%.0f", main.getTemp()));
+            }
+
+            if (mMinTemp != null) {
+                mMinTemp.setText(String.format(Locale.getDefault(), "%.0f", main.getTempMin()));
+            }
+
+            if (mMaxTemp != null) {
+                mMaxTemp.setText(String.format(Locale.getDefault(), "%.0f", main.getTempMax()));
+            }
+
+            if (mWeatherBackground != null) {
+                switch ((currentWeather.getWeather().get(0).getMain()).toLowerCase()) {
+                    case "rain":
+                        mWeatherBackground.setImageResource(R.drawable.forest_rainy);
+                        break;
+
+                    case "clear sky":
+                        mWeatherBackground.setImageResource(R.drawable.forest_sunny);
+                        break;
+
+                    case "few clouds":
+                        mWeatherBackground.setImageResource(R.drawable.forest_cloudy);
+                        break;
+
+                    default:
+                        mWeatherBackground.setImageResource(R.drawable.forest_sunny);
+                }
+            }
+        }
+    }
+
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         switch (requestCode) {
             case 1: {
 
-                // If request is cancelled, the result arrays are empty.
                 if (grantResults.length > 0
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-
-                    // permission was granted, yay! Do the
-                    // contacts-related task you need to do.
+                    checkLocationPermissionAndStart();
                 } else {
 
-                    // permission denied, boo! Disable the
-                    // functionality that depends on this permission.
+                    //create screen to handle denying of location permission.
                     Toast.makeText(MainActivity.this, R.string.permissiondenied, Toast.LENGTH_SHORT).show();
+                    finishAndRemoveTask();
                 }
-                return;
             }
         }
     }
