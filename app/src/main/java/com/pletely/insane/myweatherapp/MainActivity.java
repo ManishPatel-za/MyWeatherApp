@@ -48,7 +48,7 @@ public class MainActivity extends AppCompatActivity {
     //TODO: 6. Onsave instance and restore
     //TODO: 7. Handle for tablet Mode
     //TODO: 8. if time:choose sea or forest theme/firebase login/unit test/control animations
-    private static final String API_KEY = "760d62673766596fe58627fa0102e7ce";
+    private static final String API_KEY = "";
 
     //Default to Rosebank if no location is found
     //TODO 1. set the lats and longs
